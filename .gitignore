@@ -32,6 +32,11 @@ build/
 .env.*
 !.env.example
 
+# Local databases
+*.db
+*.sqlite
+*.sqlite3
+
 # IDE
 .vscode/
 .idea/

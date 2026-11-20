@@ -51,23 +51,37 @@ README.md
    - Web: http://localhost:5173
    - DB: PostgreSQL en `localhost:5432`
 
-## Desarrollo local (sin Docker)
+## Desarrollo local (sin Docker, Windows)
 
-### Backend
-```bash
-cd backend
-python -m venv .venv
-# Windows: .venv\Scripts\activate
-pip install -r requirements.txt -r requirements-dev.txt
-uvicorn app.main:app --reload
-```
+1. Crear archivos de entorno (SQLite por defecto):
+   ```powershell
+   Copy-Item .env.example .env
+   Copy-Item .env.example frontend\.env
+   ```
+   En `.env` (raíz, usado por backend) dejar `DATABASE_URL=sqlite:///./cuidar.db`.
+   En `frontend\.env` asegurar `VITE_API_BASE_URL=http://localhost:8000`.
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
-```
+2. Backend (PowerShell):
+   ```powershell
+   cd backend
+   python -m venv .venv
+   .\.venv\Scripts\Activate.ps1
+   pip install -r requirements.txt -r requirements-dev.txt
+   alembic upgrade head
+   python -m app.seed
+   uvicorn app.main:app --reload
+   ```
+   API: http://localhost:8000 (health: `GET /health`)
+
+3. Frontend (otra terminal PowerShell):
+   ```powershell
+   cd frontend
+   npm install
+   npm run dev
+   ```
+   Web: http://localhost:5173
+
+> Nota: en esta fase no hay migraciones de dominio ni datos de seed; los comandos `alembic upgrade head` y `python -m app.seed` se ejecutan correctamente y quedarán operativos al agregarse modelos/datos en fases siguientes.
 
 ## Comandos útiles
 

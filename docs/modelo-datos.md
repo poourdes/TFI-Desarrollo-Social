@@ -1,6 +1,6 @@
 # Modelo de datos
 
-Implementado en **Fase 1 (modelo multi-área)**. Base de datos: PostgreSQL en producción/Docker; SQLite para desarrollo local y tests. El diseño es genérico: las reglas de cada área viven en `areas.configuracion` (JSON), no en el código.
+Implementado en **Fase 1 (modelo multi-área)** y ampliado en **Fase 2 (panel interno y auth)**. Base de datos: PostgreSQL en producción/Docker; SQLite para desarrollo local y tests. El diseño es genérico: las reglas de cada área viven en `areas.configuracion` (JSON), no en el código.
 
 ## DER
 
@@ -65,7 +65,7 @@ erDiagram
     CASE_EVENT {
         uuid id PK
         uuid case_id FK
-        enum event_type "report_received | report_linked | visit_due | escalation_suggested"
+        enum event_type "report_received | report_linked | visit_due | escalation_suggested | escalation_confirmed"
         string public_message "sin datos personales"
         datetime created_at
         datetime updated_at
@@ -77,7 +77,7 @@ erDiagram
         string full_name
         enum role "admin | coordinador | trabajador_social"
         boolean active
-        string password_hash "nullable, auth en fase posterior"
+        string password_hash "argon2, creado por seed_admin"
         datetime created_at
         datetime updated_at
     }
@@ -90,7 +90,7 @@ erDiagram
     AUDIT_LOG {
         uuid id PK
         uuid actor_id FK "nullable = acción pública/sistema"
-        enum action "report_created | escalation_suggested | case_status_changed | area_access_denied"
+        enum action "report_created | escalation_suggested | escalation_confirmed | case_status_changed | area_access_denied | visit_recorded | contact_revealed"
         string entity_type
         uuid entity_id "nullable"
         json details "sin IP ni fingerprint"
@@ -163,23 +163,34 @@ Contacto voluntario de quien informa, **cifrado con Fernet y aislado de `reports
 
 ### `case_events`
 
-Historial público del caso, sin datos personales; se expone por código de seguimiento. Los tipos `visit_due` y `escalation_suggested` son **sugerencias** generadas desde la configuración del área, nunca acciones automáticas.
+Historial público del caso, sin datos personales; se expone por código de seguimiento. Los tipos `visit_due` y `escalation_suggested` son **sugerencias** generadas desde la configuración del área, nunca acciones automáticas. `escalation_confirmed` se agrega solo tras confirmación humana explícita en el panel.
 
 | Campo | Tipo | Observaciones |
 | --- | --- | --- |
 | `id` | UUID | PK. |
 | `case_id` | UUID | FK a `cases.id` (`CASCADE`). |
-| `event_type` | enum | `report_received`, `report_linked`, `visit_due`, `escalation_suggested`. |
+| `event_type` | enum | `report_received`, `report_linked`, `visit_due`, `escalation_suggested`, `escalation_confirmed`. |
 | `public_message` | string(200) | Mensaje apto para la consulta pública. |
 | `created_at`, `updated_at` | datetime | UTC. |
 
 ### `staff_users` y `staff_user_areas`
 
-Personal de la Oficina. Roles: `admin`, `coordinador`, `trabajador_social`. Un usuario tiene una o más áreas asignadas; `visible_cases()` filtra los casos por esas áreas y por la política `privacy.panel_access` del área. La autenticación se implementa en una fase posterior (`password_hash` queda preparado).
+Personal de la Oficina. Roles: `admin`, `coordinador`, `trabajador_social`. Un usuario tiene una o más áreas asignadas; `visible_cases()` filtra los casos por esas áreas y por la política `privacy.panel_access` del área. El login usa argon2 + JWT en cookie `httpOnly`; los usuarios se crean con `python -m app.seed_admin`.
 
 ### `audit_logs`
 
-Trazabilidad interna de acciones, sin IP ni fingerprint. `actor_id` nulo indica acción pública/sistema. Las sugerencias de escalamiento registran `requires_human_confirmation: true` en `details`.
+Trazabilidad interna de acciones, sin IP ni fingerprint. `actor_id` nulo indica acción pública/sistema. Las sugerencias de escalamiento registran `requires_human_confirmation: true` en `details`. En Fase 2 se amplió con `visit_recorded`, `escalation_confirmed` y `contact_revealed`, además de `area_access_denied` para denegaciones del panel.
+
+## Panel interno (Fase 2)
+
+- `POST /api/auth/login`: devuelve el usuario y setea la cookie `cuidar_access` (`httpOnly`, `SameSite=lax`, `Secure` en producción, `Path=/api`); `GET /api/auth/me` y `POST /api/auth/logout` completan el ciclo. No existe register público.
+- `GET /api/panel/cases`: lista casos visibles para el usuario, con filtros opcionales `area_slug` y `status`.
+- `GET /api/panel/cases/{id}`: detalle con denuncias, timeline, transiciones permitidas y si hay escalamiento pendiente de confirmación.
+- `POST /api/panel/cases/{id}/transition`: valida `workflow.transitions` del área y registra `case_status_changed`.
+- `POST /api/panel/cases/{id}/visit`: registra `visit_recorded` en auditoría.
+- `POST /api/panel/cases/{id}/escalation/confirm`: exige `{"confirm": true}`, agrega `escalation_confirmed` al timeline y registra la auditoría. Un `confirm: false` se rechaza con 422.
+- `GET /api/panel/reports/{id}/contact`: descifra el contacto solo para roles permitidos por el área y registra `contact_revealed`.
+- Todo acceso denegado por área/rol registra `area_access_denied`. Las reglas siguen viniendo de `AreaConfig`; el panel no hardcodea permisos por área.
 
 ## Configuración por área
 
@@ -270,3 +281,4 @@ No se aceptan archivos en Fase 1, por lo que no existe superficie de metadatos E
 
 - `a148dfeb064b_reporting_schema.py`: esquema inicial (`cases`, `reports`, `case_events`).
 - `f3b1c7d9e2a4_multi_area.py`: crea `areas`, `report_contacts`, `staff_users`, `staff_user_areas` y `audit_logs`; backfillea `cases.area_id` con adultos mayores; mueve el contacto cifrado a su tabla; convierte `category`/`affected_age_range` a strings configurables; amplía los eventos; incluye `downgrade`.
+- `c4e8b1a2d760_fase2_panel_enums.py`: amplía `audit_action` y `case_event_type` para visitas, confirmación y lectura de contacto, con ramas PostgreSQL/SQLite e incrementos en `downgrade`.

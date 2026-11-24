@@ -2,7 +2,7 @@
 
 Plataforma web para **denuncias anónimas** de situaciones de negligencia, abuso o abandono de **adultos mayores**, destinada a una oficina municipal (contexto: Municipalidad de Aguilares, Tucumán, Argentina).
 
-> Trabajo Final Integrador (TFI). Estado: **Fase 1 — Modelo de datos y denuncias públicas**.
+> Trabajo Final Integrador (TFI). Estado: **Fase 2 — Panel interno, auth y auditoría**.
 
 ## Principios
 
@@ -60,7 +60,7 @@ README.md
    Copy-Item .env.example frontend\.env
    ```
    En `.env` (raíz, usado por backend) dejar `DATABASE_URL=sqlite:///./cuidar.db`.
-   En `frontend\.env` asegurar `VITE_API_BASE_URL=http://localhost:8000`.
+   En `frontend\.env` asegurar `VITE_API_BASE_URL=http://localhost:8000`. Para crear el admin: `python -m app.seed_admin --email admin@example.com --password <clave> --areas adultos-mayores` (o usar `ADMIN_EMAIL`, `ADMIN_PASSWORD`, `ADMIN_AREAS`).
 
 2. Backend (PowerShell):
    ```powershell
@@ -82,7 +82,7 @@ README.md
    ```
    Web: http://localhost:5173
 
-> `alembic upgrade head` crea las tablas `cases`, `reports` y `case_events`. `python -m app.seed` sigue sin cargar datos de dominio (los usuarios internos se definirán en fases posteriores).
+> `alembic upgrade head` crea todas las tablas, incluidas `areas`, `staff_users` y `audit_logs`. `python -m app.seed` carga las cinco áreas; `python -m app.seed_admin` crea el usuario interno.
 
 ## Comandos útiles
 
@@ -103,27 +103,33 @@ README.md
   npm run test
   ```
 
-## Endpoints públicos (Fase 1)
+## Endpoints
 
-- `POST /api/reports`: crea una denuncia, la agrupa en un caso y devuelve `tracking_code`, `case_number`, `status` y `created_at`. Guardar el código: se muestra una sola vez.
-- `POST /api/reports/track`: con `{"tracking_code": "CUID-XXXX-XXXX-XXXX"}` en el body, devuelve el número de caso, su estado y un timeline público sin datos personales. El código no viaja en la URL.
+Públicos:
+- `GET /api/areas`: áreas activas, campos del formulario y líneas de emergencia.
+- `POST /api/reports/{area_slug}`: crea una denuncia para un área y devuelve `tracking_code`, `case_number`, `status` y `created_at`. Guardar el código: se muestra una sola vez.
+- `POST /api/reports/track`: con `{"tracking_code": "CUID-XXXX-XXXX-XXXX"}` en el body, devuelve el número de caso, su estado y un timeline público sin datos personales.
+
+Internos (requieren cookie de sesión):
+- `POST /api/auth/login`, `GET /api/auth/me`, `POST /api/auth/logout`.
+- `GET /api/panel/cases`, `GET /api/panel/cases/{id}`, `POST /api/panel/cases/{id}/transition`, `POST /api/panel/cases/{id}/visit`, `POST /api/panel/cases/{id}/escalation/confirm`, `GET /api/panel/reports/{id}/contact`.
 
 ```bash
-curl -X POST http://localhost:8000/api/reports \
+curl -X POST http://localhost:8000/api/reports/adultos-mayores \
   -H "Content-Type: application/json" \
-  -d '{"category":"neglect","affected_name":"María Pérez","locality":"Aguilares","address":"Calle 1","description":"Relato de la situación observada."}'
+  -d '{"situation_type":"neglect","affected_name":"María Pérez","age_range":"range_70_79","locality":"Aguilares","address":"Calle 1","description":"Relato de la situación observada."}'
 ```
 
-Detalles del modelo y reglas de agrupación: `/docs/modelo-datos.md`.
+Detalles del modelo, reglas de agrupación y panel: `/docs/modelo-datos.md`.
 
 ## Usuarios de prueba
 
-Se definirán en fases posteriores (seed).
+No hay registro público. Crear uno con `python -m app.seed_admin --email admin@example.com --password <clave> --areas adultos-mayores`.
 
 ## Documentación
 
 - `/docs/arquitectura.md`
-- `/docs/modelo-datos.md` (Fase 1)
+- `/docs/modelo-datos.md` (Fase 1 multi-área + Fase 2 panel)
 - `/docs/privacidad-y-seguridad.md` (Fase 3)
 - `/docs/manual-usuario.md` (Fase 7)
 - `/docs/decisiones.md`

@@ -33,6 +33,7 @@ class CaseEventType(StrEnum):
     report_linked = "report_linked"
     visit_due = "visit_due"
     escalation_suggested = "escalation_suggested"
+    escalation_confirmed = "escalation_confirmed"
 
 
 class StaffRole(StrEnum):
@@ -44,5 +45,8 @@ class StaffRole(StrEnum):
 class AuditAction(StrEnum):
     report_created = "report_created"
     escalation_suggested = "escalation_suggested"
+    escalation_confirmed = "escalation_confirmed"
     case_status_changed = "case_status_changed"
     area_access_denied = "area_access_denied"
+    visit_recorded = "visit_recorded"
+    contact_revealed = "contact_revealed"

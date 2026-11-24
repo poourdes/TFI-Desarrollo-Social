@@ -2,7 +2,7 @@
 
 Plataforma web para **denuncias anónimas** de situaciones de negligencia, abuso o abandono de **adultos mayores**, destinada a una oficina municipal (contexto: Municipalidad de Aguilares, Tucumán, Argentina).
 
-> Trabajo Final Integrador (TFI). Estado: **Fase 0 — Fundamentos**.
+> Trabajo Final Integrador (TFI). Estado: **Fase 1 — Modelo de datos y denuncias públicas**.
 
 ## Principios
 
@@ -46,6 +46,7 @@ README.md
    ```bash
    docker compose up --build
    ```
+   El servicio `api` aplica las migraciones Alembic antes de arrancar.
 3. Servicios:
    - API: http://localhost:8000 (health: `GET /health`)
    - Web: http://localhost:5173
@@ -81,7 +82,7 @@ README.md
    ```
    Web: http://localhost:5173
 
-> Nota: en esta fase no hay migraciones de dominio ni datos de seed; los comandos `alembic upgrade head` y `python -m app.seed` se ejecutan correctamente y quedarán operativos al agregarse modelos/datos en fases siguientes.
+> `alembic upgrade head` crea las tablas `cases`, `reports` y `case_events`. `python -m app.seed` sigue sin cargar datos de dominio (los usuarios internos se definirán en fases posteriores).
 
 ## Comandos útiles
 
@@ -101,6 +102,19 @@ README.md
   npm run typecheck
   npm run test
   ```
+
+## Endpoints públicos (Fase 1)
+
+- `POST /api/reports`: crea una denuncia, la agrupa en un caso y devuelve `tracking_code`, `case_number`, `status` y `created_at`. Guardar el código: se muestra una sola vez.
+- `POST /api/reports/track`: con `{"tracking_code": "CUID-XXXX-XXXX-XXXX"}` en el body, devuelve el número de caso, su estado y un timeline público sin datos personales. El código no viaja en la URL.
+
+```bash
+curl -X POST http://localhost:8000/api/reports \
+  -H "Content-Type: application/json" \
+  -d '{"category":"neglect","affected_name":"María Pérez","locality":"Aguilares","address":"Calle 1","description":"Relato de la situación observada."}'
+```
+
+Detalles del modelo y reglas de agrupación: `/docs/modelo-datos.md`.
 
 ## Usuarios de prueba
 

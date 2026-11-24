@@ -1,20 +1,22 @@
 """Database seed entrypoint.
 
-Runs against the configured DATABASE_URL (SQLite or PostgreSQL).
-Domain seed data will be added in later phases.
+Runs against the configured DATABASE_URL (SQLite or PostgreSQL) and upserts
+the area definitions used by the public reporting flow.
 """
 
-from sqlalchemy import create_engine, text
+from sqlalchemy import create_engine
+from sqlalchemy.orm import Session
 
 from app.core.config import settings
+from app.data.areas import seed_areas
 
 
 def main() -> None:
     engine = create_engine(settings.database_url)
-    with engine.connect() as connection:
-        connection.execute(text("SELECT 1"))
+    with Session(engine) as session:
+        seed_areas(session)
     print(f"Seed completed. Database: {settings.database_url}")
-    print("No domain seed data defined yet.")
+    print("Five areas upserted.")
 
 
 if __name__ == "__main__":

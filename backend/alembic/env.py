@@ -4,11 +4,9 @@ from sqlalchemy import engine_from_config, pool
 
 from alembic import context
 from app.core.config import settings
+from app.models import Base
 
-# add your model's MetaData object here for 'autogenerate' support
-# from app.db.base import Base
-# target_metadata = Base.metadata
-target_metadata = None
+target_metadata = Base.metadata
 
 config = context.config
 if config.config_file_name is not None:

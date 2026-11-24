@@ -10,7 +10,7 @@ Sistema web para denuncias anónimas de maltrato/abandono de adultos mayores, co
 ## Componentes (Fase 0)
 
 - `web`: SPA React servida en desarrollo por Vite.
-- `api`: servicio FastAPI, expone `/health` y (en fases siguientes) `/api/...`.
+- `api`: servicio FastAPI, expone `/health` y los endpoints públicos `/api/reports` y `/api/reports/track`.
 - `db`: PostgreSQL con persistencia en volumen Docker.
 
 ## Estructura de monorepo
@@ -27,6 +27,6 @@ Sistema web para denuncias anónimas de maltrato/abandono de adultos mayores, co
 
 ## Próximos pasos
 
-- Fase 1: modelo de datos, migraciones y endpoints públicos núcleo.
+- Fase 1 (implementada): modelo `cases`/`reports`/`case_events`, migración inicial, código de seguimiento hasheado, agrupación en casos y endpoints públicos.
 - Fase 2: máquina de estados, umbrales, visitas y auditoría.
 - Fase 3: endurecimiento de seguridad y privacidad.

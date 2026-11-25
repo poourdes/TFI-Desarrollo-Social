@@ -85,6 +85,24 @@ def test_denied_case_access_is_audited(
     assert denials[0].details["area_slug"] == "ninez-adolescencia"
 
 
+def test_user_never_sees_unassigned_area_cases(
+    client: TestClient, db_session: Session, worker_user: StaffUser
+) -> None:
+    case = create_reports(db_session, "abuso-laboral")
+    login(client, "worker@example.com")
+    listed = client.get("/api/panel/cases")
+    assert listed.status_code == 200
+    assert all(item["area_slug"] != "abuso-laboral" for item in listed.json())
+    detail = client.get(f"/api/panel/cases/{case.id}")
+    assert detail.status_code == 403
+    transition = client.post(
+        f"/api/panel/cases/{case.id}/transition", json={"target": "in_review"}
+    )
+    assert transition.status_code == 403
+    visit = client.post(f"/api/panel/cases/{case.id}/visit", json={"notes": "n"})
+    assert visit.status_code == 403
+
+
 def test_transition_uses_area_workflow_and_is_audited(
     client: TestClient, db_session: Session, admin_user: StaffUser
 ) -> None:
@@ -105,6 +123,19 @@ def test_transition_uses_area_workflow_and_is_audited(
     )
     assert invalid.status_code == 409
     assert len(audit_actions(db_session, AuditAction.case_status_changed)) == 1
+
+
+def test_worker_cannot_confirm_escalation(
+    client: TestClient, db_session: Session, worker_user: StaffUser
+) -> None:
+    case = create_reports(db_session, "adultos-mayores", count=3)
+    login(client, "worker@example.com")
+    response = client.post(
+        f"/api/panel/cases/{case.id}/escalation/confirm", json={"confirm": True}
+    )
+    assert response.status_code == 403
+    denied = audit_actions(db_session, AuditAction.area_access_denied)
+    assert any(item.details.get("reason") == "escalation_role" for item in denied)
 
 
 def test_visit_and_escalation_confirmation_require_human_action(
@@ -155,6 +186,13 @@ def test_contact_decryption_is_authorized_and_audited(
     revealed = audit_actions(db_session, AuditAction.contact_revealed)
     assert len(revealed) == 1
     assert str(revealed[0].entity_id) == str(report_id)
+
+    detail = client.get(f"/api/panel/cases/{case.id}")
+    assert detail.status_code == 200
+    assert "contacto@example.com" not in detail.text
+    sensitive = audit_actions(db_session, AuditAction.sensitive_data_revealed)
+    assert len(sensitive) == 1
+    assert "report.description" in sensitive[0].details["fields"]
 
     restricted_case = create_reports(
         db_session, "ninez-adolescencia", contact="reservado@example.com"

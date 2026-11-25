@@ -15,6 +15,7 @@ from app.models import (
     ReportStatus,
 )
 from app.services.contact import decrypt_contact
+from app.services.sensitive import decrypt_description
 from app.services.tracking_code import (
     TRACKING_CODE_RE,
     generate_tracking_code,
@@ -50,7 +51,7 @@ def test_create_report_returns_code_and_stores_only_hash(
     )
     assert report is not None
     assert report.tracking_code_hash != tracking_code
-    assert tracking_code not in report.description
+    assert tracking_code.encode() not in bytes(report.description_encrypted)
     assert report.case.case_number == body["case_number"]
     assert report.case.area.id == area_id_for(ADULTOS)
     assert {event.event_type for event in report.case.events} == {
@@ -98,6 +99,18 @@ def test_unknown_area_returns_404(
     assert response.status_code == 404
 
 
+def test_description_is_encrypted_and_not_stored_plaintext(
+    client: TestClient, db_session: Session, report_payload: dict[str, object]
+) -> None:
+    _create_report(client, report_payload)
+    report = db_session.scalar(select(Report))
+    assert report is not None
+    assert b"atenci" not in bytes(report.description_encrypted)
+    assert decrypt_description(bytes(report.description_encrypted)) == str(
+        report_payload["description"]
+    )
+
+
 def test_contact_is_encrypted_in_separate_table(
     client: TestClient, db_session: Session, report_payload: dict[str, object]
 ) -> None:
@@ -111,6 +124,9 @@ def test_contact_is_encrypted_in_separate_table(
     assert b"381 555 1234" not in report.contact.contact_encrypted
     assert decrypt_contact(bytes(report.contact.contact_encrypted)) == "381 555 1234"
     assert "contact_encrypted" not in {
+        column["name"] for column in inspect(db_session.bind).get_columns("reports")
+    }
+    assert "description" not in {
         column["name"] for column in inspect(db_session.bind).get_columns("reports")
     }
     assert db_session.scalar(select(ReportContact)) is not None

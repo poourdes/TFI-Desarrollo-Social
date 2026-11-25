@@ -5,6 +5,11 @@ from pydantic import BaseModel
 from app.schemas.area_config import AnonymityLevel, Choice
 
 
+class CaptchaPublicConfig(BaseModel):
+    provider: str
+    site_key: str | None = None
+
+
 class FormFieldPublic(BaseModel):
     key: str
     label: str
@@ -35,4 +40,5 @@ class EmergencyLine(BaseModel):
 class PublicAreasResponse(BaseModel):
     notice: str
     emergency_lines: list[EmergencyLine]
+    captcha: CaptchaPublicConfig
     areas: list[PublicArea]

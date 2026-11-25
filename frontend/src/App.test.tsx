@@ -1,4 +1,4 @@
-import { fireEvent, render, screen, waitFor } from "@testing-library/react";
+﻿import { fireEvent, render, screen, waitFor } from "@testing-library/react";
 import { beforeEach, describe, expect, it, vi } from "vitest";
 import App from "./App";
 
@@ -17,18 +17,8 @@ const areasResponse = {
         situation_types: [{ value: "neglect", label: "Negligencia" }],
         relationship_options: [],
         fields: [
-          {
-            key: "situation_type",
-            label: "Tipo de situación",
-            required: true,
-            choices: null,
-          },
-          {
-            key: "description",
-            label: "Relato de los hechos",
-            required: true,
-            choices: null,
-          },
+          { key: "situation_type", label: "Tipo de situación", required: true, choices: null },
+          { key: "description", label: "Relato de los hechos", required: true, choices: null },
         ],
       },
     },
@@ -38,25 +28,9 @@ const areasResponse = {
 function mockFetch() {
   const fetchMock = vi.fn((input: RequestInfo | URL, init?: RequestInit) => {
     const url = String(input);
-    if (url.endsWith("/api/areas")) {
-      return Promise.resolve({
-        ok: true,
-        status: 200,
-        json: async () => areasResponse,
-      });
-    }
+    if (url.endsWith("/api/areas")) return Promise.resolve({ ok: true, status: 200, json: async () => areasResponse });
     if (url.endsWith("/api/reports/adultos-mayores") && init?.method === "POST") {
-      return Promise.resolve({
-        ok: true,
-        status: 201,
-        json: async () => ({
-          tracking_code: "CUID-2ABC-3DEF-4GHI",
-          case_number: "CASO-202611-0001",
-          area_slug: "adultos-mayores",
-          status: "received",
-          created_at: "2026-11-24T12:00:00Z",
-        }),
-      });
+      return Promise.resolve({ ok: true, status: 201, json: async () => ({ tracking_code: "CUID-2ABC-3DEF-4GHI", case_number: "CASO-202611-0001", area_slug: "adultos-mayores", status: "received", created_at: "2026-11-24T12:00:00Z" }) });
     }
     return Promise.reject(new Error(`Unexpected request: ${url}`));
   });
@@ -65,39 +39,29 @@ function mockFetch() {
 }
 
 describe("App", () => {
-  beforeEach(() => {
-    vi.unstubAllGlobals();
-  });
+  beforeEach(() => { vi.unstubAllGlobals(); });
 
   it("renders base heading", async () => {
     mockFetch();
     render(<App />);
-    expect(screen.getByRole("heading", { name: "Cuidar" })).toBeInTheDocument();
-    await screen.findByText("Adultos mayores");
+    expect(screen.getByRole("heading", { name: /Denunciá de forma anónima y segura/i })).toBeInTheDocument();
+    expect(screen.getAllByText("Cuidar").length).toBeGreaterThan(0);
+    expect((await screen.findAllByText("Adultos mayores")).length).toBeGreaterThan(0);
   });
 
   it("submits the public form to the area-scoped endpoint", async () => {
     const fetchMock = mockFetch();
     render(<App />);
-
-    expect(await screen.findByText("Adultos mayores")).toBeInTheDocument();
-    fireEvent.change(screen.getByLabelText("Área"), {
-      target: { value: "adultos-mayores" },
-    });
-    fireEvent.change(screen.getByLabelText("Tipo de situación *"), {
-      target: { value: "neglect" },
-    });
-    fireEvent.change(screen.getByLabelText("Relato de los hechos *"), {
-      target: { value: "Una denuncia de prueba con longitud suficiente." },
-    });
+    await screen.findAllByText("Adultos mayores");
+    fireEvent.click(screen.getByRole("radio", { name: /Adultos mayores/i }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.change(await screen.findByLabelText("Tipo de situación *"), { target: { value: "neglect" } });
+    fireEvent.change(screen.getByLabelText("Relato de los hechos *"), { target: { value: "Una denuncia de prueba con longitud suficiente." } });
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
+    fireEvent.click(screen.getByRole("button", { name: "Continuar" }));
     fireEvent.click(screen.getByRole("button", { name: "Enviar denuncia" }));
-
-    await waitFor(() =>
-      expect(screen.getByText(/CUID-2ABC-3DEF-4GHI/)).toBeInTheDocument(),
-    );
-    expect(fetchMock).toHaveBeenCalledWith(
-      expect.stringContaining("/api/reports/adultos-mayores"),
-      expect.objectContaining({ method: "POST", credentials: "include" }),
-    );
+    await waitFor(() => expect(screen.getByText(/CUID-2ABC-3DEF-4GHI/)).toBeInTheDocument());
+    expect(fetchMock).toHaveBeenCalledWith(expect.stringContaining("/api/reports/adultos-mayores"), expect.objectContaining({ method: "POST", credentials: "include" }));
   });
 });

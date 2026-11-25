@@ -5,6 +5,7 @@ import App from "./App";
 const areasResponse = {
   notice: "Esta plataforma no es para emergencias.",
   emergency_lines: [{ numero: "911", etiqueta: "Emergencias generales" }],
+  captcha: { provider: "mock", site_key: null },
   areas: [
     {
       id: "b5b9f4c9-4d1e-5f1a-9c2e-6f4e8b1a2d76",

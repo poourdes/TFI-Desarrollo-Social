@@ -19,6 +19,7 @@ class ReportCreate(BaseModel):
     description: str | None = Field(default=None, min_length=20, max_length=4000)
     relationship_to_victim: str | None = Field(default=None, max_length=64)
     contact: str | None = Field(default=None, min_length=3, max_length=256)
+    captcha_token: str | None = Field(default=None, min_length=1, max_length=4096)
 
     @field_validator(
         "situation_type",
@@ -29,6 +30,7 @@ class ReportCreate(BaseModel):
         "description",
         "relationship_to_victim",
         "contact",
+        "captcha_token",
     )
     @classmethod
     def reject_blank_text(cls, value: str | None) -> str | None:

@@ -10,6 +10,7 @@ from app.models import (
     CaseEventType,
     CaseStatus,
     Report,
+    StaffRole,
     StaffUser,
 )
 from app.schemas.area_config import AreaConfig
@@ -18,6 +19,7 @@ from app.services.access import AreaAccessDenied, assert_area_access, visible_ca
 from app.services.areas import parse_area_config
 from app.services.audit import record_audit
 from app.services.contact import decrypt_contact
+from app.services.sensitive import decrypt_description
 from app.services.workflow import assert_transition_allowed
 
 
@@ -99,7 +101,7 @@ def _case_detail(case: Case, config: AreaConfig) -> CaseDetail:
                 situation_type=report.situation_type,
                 locality=report.locality,
                 address=report.address,
-                description=report.description,
+                description=decrypt_description(bytes(report.description_encrypted)),
                 status=report.status,
                 incident_date=report.incident_date,
                 created_at=report.created_at,
@@ -147,6 +149,19 @@ def list_cases(
 def get_case_detail(db: Session, user: StaffUser, case_id: UUID) -> CaseDetail:
     case = _load_case(db, case_id)
     _assert_case_access(db, user, case)
+    record_audit(
+        db,
+        action=AuditAction.sensitive_data_revealed,
+        entity_type="case",
+        entity_id=case.id,
+        actor_id=user.id,
+        details={
+            "area_slug": case.area.slug,
+            "fields": ["report.description"],
+            "report_ids": [str(report.id) for report in case.reports],
+        },
+    )
+    db.commit()
     return _case_detail(case, parse_area_config(case.area))
 
 
@@ -208,6 +223,17 @@ def confirm_escalation(
     case = _load_case(db, case_id)
     _assert_case_access(db, user, case)
     config = parse_area_config(case.area)
+    if user.role not in {StaffRole.admin, StaffRole.coordinator}:
+        record_audit(
+            db,
+            action=AuditAction.area_access_denied,
+            entity_type="case",
+            entity_id=case.id,
+            actor_id=user.id,
+            details={"area_slug": case.area.slug, "reason": "escalation_role"},
+        )
+        db.commit()
+        raise AreaAccessDenied("No autorizado para confirmar escalamientos")
     if config.escalation is None:
         raise CaseConflictError("El área no define escalamiento")
     if not _pending_escalation(case):

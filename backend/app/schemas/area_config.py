@@ -17,6 +17,7 @@ KNOWN_FORM_FIELDS = frozenset(
         "description",
         "relationship_to_victim",
         "contact",
+        "captcha_token",
     }
 )
 

@@ -1,9 +1,11 @@
 from sqlalchemy import select
 from sqlalchemy.orm import Session
 
+from app.core.config import settings
 from app.data.areas import EMERGENCY_LINES, PUBLIC_NOTICE
 from app.models import Area
 from app.schemas.area import (
+    CaptchaPublicConfig,
     EmergencyLine,
     FormFieldPublic,
     PublicArea,
@@ -100,11 +102,18 @@ def build_public_areas(db: Session) -> PublicAreasResponse:
                 ),
             )
         )
+    provider = settings.captcha_provider.strip().lower()
     return PublicAreasResponse(
         notice=PUBLIC_NOTICE,
         emergency_lines=[
             EmergencyLine(numero=line["numero"], etiqueta=line["etiqueta"])
             for line in EMERGENCY_LINES
         ],
+        captcha=CaptchaPublicConfig(
+            provider=provider,
+            site_key=(
+                settings.turnstile_site_key or None if provider == "turnstile" else None
+            ),
+        ),
         areas=public_areas,
     )

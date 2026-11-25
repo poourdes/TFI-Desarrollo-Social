@@ -8,7 +8,11 @@ BACKEND_DIR = Path(__file__).resolve().parents[1]
 
 def test_alembic_upgrade_downgrade_and_upgrade_again(tmp_path: Path) -> None:
     database_url = f"sqlite+pysqlite:///{(tmp_path / 'migration.db').as_posix()}"
-    environment = dict(os.environ, DATABASE_URL=database_url)
+    environment = dict(
+        os.environ,
+        DATABASE_URL=database_url,
+        FERNET_KEY="MDEyMzQ1Njc4OWFiY2RlZjAxMjM0NTY3ODlhYmNkZWY=",
+    )
 
     def run_alembic(*arguments: str) -> None:
         result = subprocess.run(

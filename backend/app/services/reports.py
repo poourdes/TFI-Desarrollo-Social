@@ -24,6 +24,7 @@ from app.services.audit import record_audit
 from app.services.contact import encrypt_contact
 from app.services.escalation import evaluate_escalation
 from app.services.grouping import build_grouping_key
+from app.services.sensitive import encrypt_description
 from app.services.tracking_code import generate_tracking_code, hash_tracking_code
 
 
@@ -102,7 +103,7 @@ def create_report(
         age_range=payload.age_range,
         locality=locality,
         address=payload.address,
-        description=cast(str, payload.description),
+        description_encrypted=encrypt_description(cast(str, payload.description)),
         relationship_to_victim=payload.relationship_to_victim,
         grouping_key_hash=grouping_key,
         status=ReportStatus.received if is_new_case else ReportStatus.linked,

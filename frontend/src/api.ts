@@ -28,11 +28,13 @@ export interface PublicArea {
 export interface PublicAreasResponse {
   notice: string;
   emergency_lines: Array<{ numero: string; etiqueta: string }>;
+  captcha: { provider: string; site_key: string | null };
   areas: PublicArea[];
 }
 
 export interface ReportPayload {
   [key: string]: string | undefined;
+  captcha_token?: string;
 }
 
 export interface ReportCreated {

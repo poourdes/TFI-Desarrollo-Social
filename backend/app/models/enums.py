@@ -50,3 +50,5 @@ class AuditAction(StrEnum):
     area_access_denied = "area_access_denied"
     visit_recorded = "visit_recorded"
     contact_revealed = "contact_revealed"
+    sensitive_data_revealed = "sensitive_data_revealed"
+    staff_user_created = "staff_user_created"

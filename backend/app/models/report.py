@@ -2,7 +2,8 @@ import uuid
 from datetime import date
 from typing import TYPE_CHECKING
 
-from sqlalchemy import Date, Enum, ForeignKey, String, Text, Uuid
+import sqlalchemy as sa
+from sqlalchemy import Date, Enum, ForeignKey, String, Uuid
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.db.base import Base
@@ -33,7 +34,9 @@ class Report(TimestampMixin, Base):
     age_range: Mapped[str | None] = mapped_column(String(32), nullable=True)
     locality: Mapped[str] = mapped_column(String(120), nullable=False)
     address: Mapped[str | None] = mapped_column(String(256), nullable=True)
-    description: Mapped[str] = mapped_column(Text, nullable=False)
+    description_encrypted: Mapped[bytes] = mapped_column(
+        sa.LargeBinary, nullable=False, default=b""
+    )
     relationship_to_victim: Mapped[str | None] = mapped_column(
         String(64), nullable=True
     )

@@ -22,6 +22,8 @@ def test_public_areas_expose_form_emergency_lines_and_notice(
     assert "affected_name" not in fields
     assert "affected_initials" in fields
     assert "escalation" not in ninez
+    assert "captcha" in body
+    assert body["captcha"]["provider"] == "mock"
 
 
 def test_base_form_works_for_every_area(

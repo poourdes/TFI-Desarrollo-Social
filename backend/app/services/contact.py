@@ -5,7 +5,7 @@ from cryptography.fernet import Fernet, InvalidToken
 
 from app.core.config import settings
 
-_DOMAIN = b"contact:v1:"
+CONTACT_DOMAIN = b"contact:v1:"
 
 
 def _derive_key(source: str) -> str:
@@ -13,8 +13,10 @@ def _derive_key(source: str) -> str:
     return base64.urlsafe_b64encode(digest).decode("ascii")
 
 
-def _fernet() -> Fernet:
-    key = settings.fernet_key.strip()
+def get_fernet(configured_key: str | None = None) -> Fernet:
+    key = (
+        configured_key if configured_key is not None else settings.fernet_key
+    ).strip()
     if not key:
         if settings.env == "production":
             raise RuntimeError("FERNET_KEY must be configured in production")
@@ -27,17 +29,17 @@ def _fernet() -> Fernet:
     return Fernet(key.encode("ascii"))
 
 
-def encrypt_contact(value: str) -> bytes:
-    fernet = _fernet()
-    return fernet.encrypt(_DOMAIN + value.encode("utf-8"))
+def encrypt_contact(value: str, domain: bytes = CONTACT_DOMAIN) -> bytes:
+    fernet = get_fernet()
+    return fernet.encrypt(domain + value.encode("utf-8"))
 
 
-def decrypt_contact(token: bytes) -> str:
-    fernet = _fernet()
+def decrypt_contact(token: bytes, domain: bytes = CONTACT_DOMAIN) -> str:
+    fernet = get_fernet()
     try:
         plaintext = fernet.decrypt(token)
     except InvalidToken as exc:
-        raise ValueError("Invalid encrypted contact token") from exc
-    if not plaintext.startswith(_DOMAIN):
-        raise ValueError("Invalid encrypted contact payload")
-    return plaintext[len(_DOMAIN) :].decode("utf-8")
+        raise ValueError("Invalid encrypted token") from exc
+    if not plaintext.startswith(domain):
+        raise ValueError("Invalid encrypted payload")
+    return plaintext[len(domain) :].decode("utf-8")

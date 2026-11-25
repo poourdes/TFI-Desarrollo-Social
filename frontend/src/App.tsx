@@ -1,4 +1,4 @@
-import { useEffect, useState, type FormEvent } from "react";
+import { useEffect, useRef, useState, type FormEvent } from "react";
 import {
   confirmEscalation,
   getPanelCase,
@@ -28,18 +28,56 @@ function choicesFor(area: PublicArea, key: string) {
   return area.form.fields.find((field) => field.key === key)?.choices ?? [];
 }
 
+declare global {
+  interface Window {
+    turnstile?: {
+      render: (
+        element: HTMLElement,
+        options: { sitekey: string; callback: (token: string) => void },
+      ) => string;
+      reset: (widgetId?: string) => void;
+    };
+  }
+}
+
 function PublicReportForm() {
   const [data, setData] = useState<PublicAreasResponse | null>(null);
   const [slug, setSlug] = useState("");
   const [values, setValues] = useState<Record<string, string>>({});
   const [created, setCreated] = useState<ReportCreated | null>(null);
   const [error, setError] = useState("");
+  const [captchaToken, setCaptchaToken] = useState("");
+  const captchaRef = useRef<HTMLDivElement | null>(null);
+  const widgetId = useRef<string | null>(null);
 
   useEffect(() => {
     void getPublicAreas()
       .then(setData)
       .catch((reason: unknown) => setError(messageOf(reason)));
   }, []);
+
+  useEffect(() => {
+    if (data?.captcha.provider !== "turnstile" || !data.captcha.site_key) return;
+    const scriptId = "turnstile-script";
+    const renderWidget = () => {
+      if (!captchaRef.current || !window.turnstile || widgetId.current) return;
+      widgetId.current = window.turnstile.render(captchaRef.current, {
+        sitekey: data.captcha.site_key as string,
+        callback: (token: string) => setCaptchaToken(token),
+      });
+    };
+    if (document.getElementById(scriptId)) {
+      renderWidget();
+      return;
+    }
+    const script = document.createElement("script");
+    script.id = scriptId;
+    script.src = "https://challenges.cloudflare.com/turnstile/v0/api.js?render=explicit";
+    script.async = true;
+    script.defer = true;
+    script.onload = renderWidget;
+    document.body.appendChild(script);
+  }, [data]);
 
   const area = data?.areas.find((candidate) => candidate.slug === slug) ?? null;
 
@@ -58,9 +96,14 @@ function PublicReportForm() {
       const value = values[field.key]?.trim();
       if (value) payload[field.key] = value;
     }
+    if (data?.captcha.provider === "turnstile") {
+      payload.captcha_token = captchaToken;
+    }
     try {
       setCreated(await submitReport(area.slug, payload));
       setError("");
+      if (window.turnstile && widgetId.current) window.turnstile.reset(widgetId.current);
+      setCaptchaToken("");
     } catch (reason: unknown) {
       setError(messageOf(reason));
     }
@@ -151,6 +194,7 @@ function PublicReportForm() {
               </div>
             );
           })}
+          {data?.captcha.provider === "turnstile" && <div ref={captchaRef} />}
           <button className="rounded bg-slate-800 px-4 py-2 text-white" type="submit">
             Enviar denuncia
           </button>

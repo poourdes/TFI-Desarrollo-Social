@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, HTTPException, Response, status
+from fastapi import APIRouter, Depends, HTTPException, Request, Response, status
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -12,6 +12,7 @@ from app.services.auth import (
     authenticate_user,
     issue_access_token,
 )
+from app.services.rate_limit import enforce_rate_limit
 
 router = APIRouter(prefix="/auth", tags=["internal-auth"])
 db_dependency = Depends(get_db)
@@ -20,8 +21,12 @@ current_user_dependency = Depends(get_current_user)
 
 @router.post("/login", response_model=AuthenticatedUser)
 def login(
-    payload: LoginRequest, response: Response, db: Session = db_dependency
+    payload: LoginRequest,
+    request: Request,
+    response: Response,
+    db: Session = db_dependency,
 ) -> AuthenticatedUser:
+    enforce_rate_limit(request, "auth-login", limit=10, window_seconds=60)
     try:
         user = authenticate_user(db, payload.email, payload.password)
     except InvalidCredentialsError as exc:

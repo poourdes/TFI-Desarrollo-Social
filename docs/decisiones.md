@@ -8,6 +8,13 @@
 - Captcha en modo `mock` para desarrollo (integración real en Fase 3).
 - CI básico con linters, typecheck y smoke tests sobre el esqueleto.
 
+## Fase 2
+- **Auth interna**: contraseñas con argon2 y JWT en cookie `httpOnly`, `SameSite=lax`, `Secure` solo en producción, `Path=/api`. Nunca en `localStorage`. No hay registro público: el admin se crea con `python -m app.seed_admin` (o variables `ADMIN_*`).
+- **Panel**: endpoints bajo `/api/panel` con `Depends(get_current_user)`. `visible_cases()` y `can_access_area()` siguen siendo la única fuente de permisos por área; las transiciones salen de `workflow.transitions` del área.
+- **Escalamiento**: la sugerencia existente no se aplica sola. La confirmación humana explícita agrega el evento `escalation_confirmed` y una entrada de auditoría; nunca notifica a la policía automáticamente.
+- **Auditoría**: visitas, cambios de estado, confirmación de escalamiento, denegaciones de acceso y lectura de contacto usan `AuditAction`. El contacto cifrado solo se descifra en `GET /api/panel/reports/{report_id}/contact`, para roles permitidos por el área, y esa lectura también se audita.
+- **Patrón**: Strategy para reglas por área (`AreaConfig` inyectado en `workflow.py`, `escalation.py`, `access.py` y `cases.py`). No se usa State por estado porque las transiciones ya son datos de configuración.
+
 ## Fase 1
 - **Tres entidades**: `cases`, `reports` y `case_events`. El caso concentra denuncias; el evento es el único historial expuesto públicamente.
 - **Código de seguimiento de un solo uso visible**: se muestra en claro solo en la respuesta de creación; en DB se guarda únicamente HMAC-SHA256 con `TRACKING_CODE_PEPPER` y dominio `tracking-code:v1:`.

@@ -48,15 +48,15 @@ export function PanelPage({ onGoPublic }: { onGoPublic: () => void }) {
 
   if (!user) {
     return (
-      <div className="min-h-screen bg-sand-50 px-4 py-12">
-        <div className="mx-auto max-w-md rounded-3xl bg-white p-6 shadow-soft ring-1 ring-slate-100 sm:p-8">
-          <button onClick={onGoPublic} className="text-sm font-medium text-brand-700 hover:text-brand-800">← Volver al sitio público</button>
-          <h1 className="mt-4 text-2xl font-semibold text-slate-900">Ingreso al panel</h1>
-          <p className="mt-1 text-sm text-slate-600">Acceso para personal autorizado.</p>
+      <div className="min-h-screen bg-muni-celeste-claro px-4 py-12 sm:px-6 lg:px-8">
+        <div className="mx-auto w-full max-w-md rounded-3xl bg-white p-6 shadow-soft ring-1 ring-slate-100 sm:p-8">
+          <button onClick={onGoPublic} className="text-sm font-medium text-muni-celeste hover:text-muni-navy">← Volver al sitio público</button>
+          <h1 className="mt-4 text-2xl font-semibold text-muni-navy">Ingreso al panel</h1>
+          <p className="mt-1 text-sm text-slate-600 sm:text-base">Acceso para personal autorizado.</p>
           <form className="mt-6 space-y-4" onSubmit={handleLogin}>
-            <div><label className="block text-sm font-medium text-slate-700" htmlFor="email">Email</label><input id="email" type="email" className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
-            <div><label className="block text-sm font-medium text-slate-700" htmlFor="password">Contraseña</label><input id="password" type="password" className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
-            <button className="w-full rounded-xl bg-brand-700 px-4 py-2.5 font-semibold text-white hover:bg-brand-800" type="submit">Ingresar</button>
+            <div><label className="block text-sm font-medium text-muni-navy" htmlFor="email">Email</label><input id="email" type="email" className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base" value={email} onChange={(e) => setEmail(e.target.value)} required /></div>
+            <div><label className="block text-sm font-medium text-muni-navy" htmlFor="password">Contraseña</label><input id="password" type="password" className="mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base" value={password} onChange={(e) => setPassword(e.target.value)} required /></div>
+            <button className="w-full rounded-xl bg-muni-celeste px-4 py-2.5 text-sm font-semibold text-muni-navy hover:bg-muni-navy hover:text-white sm:text-base" type="submit">Ingresar</button>
           </form>
           {error && <p className="mt-4 rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</p>}
         </div>
@@ -65,24 +65,21 @@ export function PanelPage({ onGoPublic }: { onGoPublic: () => void }) {
   }
 
   return (
-    <div className="min-h-screen bg-sand-50 text-slate-900">
-      <div className="mx-auto grid max-w-7xl gap-6 px-4 py-6 lg:grid-cols-[260px_1fr] sm:px-6">
+    <div className="min-h-screen overflow-x-hidden bg-slate-50 text-muni-navy">
+      <div className="mx-auto grid w-full max-w-7xl gap-6 px-4 py-6 sm:px-6 lg:px-8 lg:grid-cols-[260px_minmax(0,1fr)]">
         <PanelSidebar user={user} view={view} onView={setView} onLogout={() => { void logout().finally(() => { setUser(null); setDetail(null); onGoPublic(); }); }} />
-        <main className="space-y-6">
-          <div>
-            <h1 className="text-2xl font-semibold">Panel de casos</h1>
-            <p className="text-sm text-slate-600">Gestión interna de denuncias y seguimiento.</p>
-          </div>
+        <main className="min-w-0 space-y-6">
+          <div><h1 className="text-2xl font-semibold sm:text-3xl">Panel de casos</h1><p className="text-sm text-slate-600 sm:text-base">Gestión interna de denuncias y seguimiento.</p></div>
           {view === "users" ? (
-            <div className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-100"><h2 className="font-semibold">Usuarios</h2><p className="mt-2 text-sm text-slate-600">La gestión de usuarios está disponible mediante el endpoint de administración.</p></div>
+            <div className="rounded-2xl bg-white p-6 shadow-soft ring-1 ring-slate-100"><h2 className="text-base font-semibold">Usuarios</h2><p className="mt-2 text-sm text-slate-600 sm:text-base">La gestión de usuarios está disponible mediante el endpoint de administración.</p></div>
           ) : (
             <>
               <SummaryCards cases={cases} details={details} />
               <div className="flex flex-col gap-3 rounded-2xl bg-white p-4 shadow-soft ring-1 ring-slate-100 sm:flex-row sm:items-center">
                 <label className="sr-only" htmlFor="case-search">Buscar caso</label>
-                <input id="case-search" placeholder="Buscar por caso o área" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:max-w-xs" value={query} onChange={(e) => setQuery(e.target.value)} />
+                <input id="case-search" placeholder="Buscar por caso o área" className="w-full rounded-xl border border-slate-300 px-3 py-2 text-sm sm:max-w-xs sm:text-base" value={query} onChange={(e) => setQuery(e.target.value)} />
                 <label className="sr-only" htmlFor="status-filter">Filtrar por estado</label>
-                <select id="status-filter" aria-label="Filtrar por estado" className="rounded-xl border border-slate-300 px-3 py-2 text-sm" value={status} onChange={(e) => { setStatus(e.target.value); void loadCases(e.target.value); }}>
+                <select id="status-filter" aria-label="Filtrar por estado" className="rounded-xl border border-slate-300 px-3 py-2 text-sm sm:text-base" value={status} onChange={(e) => { setStatus(e.target.value); void loadCases(e.target.value); }}>
                   <option value="">Todos los estados</option><option value="open">Abierto</option><option value="in_review">En revisión</option><option value="closed">Cerrado</option>
                 </select>
               </div>

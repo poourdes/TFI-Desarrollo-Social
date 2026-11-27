@@ -1,4 +1,4 @@
-@tailwind base;
+﻿@tailwind base;
 @tailwind components;
 @tailwind utilities;
 
@@ -13,8 +13,8 @@
     Arial,
     sans-serif;
   line-height: 1.5;
-  color: #0f172a;
-  background-color: #f4f7f8;
+  color: #0B2D52;
+  background-color: #ffffff;
 }
 
 body {
@@ -24,7 +24,7 @@ body {
 
 @layer base {
   *:focus-visible {
-    outline: 3px solid #0f766e;
+    outline: 3px solid #00A6D6;
     outline-offset: 2px;
   }
 }

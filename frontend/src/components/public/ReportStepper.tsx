@@ -104,15 +104,15 @@ export function ReportStepper({ data }: { data: PublicAreasResponse | null }) {
     if (!field) return null;
     const choices = choicesFor(area, key);
     const id = `field-${key}`;
-    const label = <label className="block text-sm font-medium text-slate-700" htmlFor={id}>{field.label}{field.required ? " *" : ""}</label>;
-    const cls = "mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 shadow-sm";
+    const label = <label className="block text-sm font-medium text-muni-navy" htmlFor={id}>{field.label}{field.required ? " *" : ""}</label>;
+    const cls = "mt-1 w-full rounded-xl border border-slate-300 px-3 py-2.5 text-base shadow-sm";
     return <div key={key}>{label}{choices.length > 0 ? (
       <select id={id} className={cls} required={field.required} value={values[key] ?? ""} onChange={(e) => setField(key, e.target.value)}>
         <option value="">Seleccione</option>
         {choices.map((c) => <option key={c.value} value={c.value}>{c.label}</option>)}
       </select>
     ) : key === "description" ? (
-      <textarea id={id} className={`${cls} min-h-32`} required={field.required} value={values[key] ?? ""} onChange={(e) => setField(key, e.target.value)} />
+      <textarea id={id} className={`${cls} min-h-36`} required={field.required} value={values[key] ?? ""} onChange={(e) => setField(key, e.target.value)} />
     ) : (
       <input id={id} type={key === "incident_date" ? "date" : "text"} className={cls} required={field.required} value={values[key] ?? ""} onChange={(e) => setField(key, e.target.value)} />
     )}</div>;
@@ -125,20 +125,20 @@ export function ReportStepper({ data }: { data: PublicAreasResponse | null }) {
           <span>Paso {step + 1} de {steps.length}</span><span>{steps[step]}</span>
         </div>
         <div className="mt-2 h-2 rounded-full bg-slate-100">
-          <div className="h-2 rounded-full bg-brand-600 transition-all" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
+          <div className="h-2 rounded-full bg-muni-celeste transition-all" style={{ width: `${((step + 1) / steps.length) * 100}%` }} />
         </div>
-        <div className="mt-3 hidden gap-2 text-xs sm:flex">{steps.map((s, i) => <span key={s} className={`rounded-full px-2 py-1 ${i <= step ? "bg-brand-50 text-brand-800" : "bg-slate-100 text-slate-500"}`}>{s}</span>)}</div>
+        <div className="mt-3 hidden flex-wrap gap-2 text-sm sm:flex">{steps.map((s, i) => <span key={s} className={`rounded-full px-2 py-1 ${i <= step ? "bg-muni-celeste-claro text-muni-navy" : "bg-slate-100 text-slate-500"}`}>{s}</span>)}</div>
       </div>
 
       <form onSubmit={handleSubmit} className="space-y-5">
         {step === 0 && (
           <div>
-            <p className="mb-3 text-sm font-medium text-slate-700">Seleccioná el área relacionada con la situación.</p>
+            <p className="mb-3 text-sm font-medium text-muni-navy">Seleccioná el área relacionada con la situación.</p>
             <AreaCards areas={data?.areas ?? []} selected={slug} onSelect={(s) => { setSlug(s); setValues({}); setError(""); }} />
             <div className="sr-only">
               <label htmlFor="area">Área</label>
               <select id="area" value={slug} onChange={(e) => { setSlug(e.target.value); setValues({}); }}>
-                <option value="">Seleccione un ǭrea</option>
+                <option value="">Seleccione un área</option>
                 {(data?.areas ?? []).map((a) => <option key={a.id} value={a.slug}>{a.nombre}</option>)}
               </select>
             </div>
@@ -148,12 +148,12 @@ export function ReportStepper({ data }: { data: PublicAreasResponse | null }) {
         {step === 2 && <div className="space-y-4">{["affected_name","affected_initials","age_range","relationship_to_victim","locality","address","incident_date"].map(renderField)}</div>}
         {step === 3 && (
           <div className="space-y-4">
-            <div className="rounded-2xl bg-sand-50 p-4 ring-1 ring-slate-200">
+            <div className="rounded-2xl bg-muni-celeste-claro/50 p-4 ring-1 ring-muni-celeste/20">
               <label className="flex items-start gap-3">
-                <input type="checkbox" className="mt-1 h-4 w-4 rounded border-slate-300 text-brand-700" checked={wantContact} onChange={(e) => setWantContact(e.target.checked)} />
+                <input type="checkbox" className="mt-1 h-4 w-4 rounded border-slate-300 text-muni-celeste" checked={wantContact} onChange={(e) => setWantContact(e.target.checked)} />
                 <div>
-                  <span className="font-medium text-slate-900">Quiero que me contacten</span>
-                  <p className="text-sm text-slate-600">Opcional. Si no lo activás, la denuncia se envía de forma anónima.</p>
+                  <span className="font-medium text-muni-navy">Quiero que me contacten</span>
+                  <p className="text-sm text-slate-600 sm:text-base">Opcional. Si no lo activás, la denuncia se envía de forma anónima.</p>
                 </div>
               </label>
             </div>
@@ -162,9 +162,9 @@ export function ReportStepper({ data }: { data: PublicAreasResponse | null }) {
         )}
         {step === 4 && (
           <div className="space-y-4">
-            <div className="rounded-2xl bg-sand-50 p-5 ring-1 ring-slate-200">
-              <h3 className="font-semibold text-slate-900">Revisá tu denuncia</h3>
-              <dl className="mt-3 space-y-2 text-sm text-slate-700">
+            <div className="rounded-2xl bg-muni-celeste-claro/40 p-5 ring-1 ring-muni-celeste/20">
+              <h3 className="text-base font-semibold text-muni-navy">Revisá tu denuncia</h3>
+              <dl className="mt-3 space-y-2 text-sm text-slate-700 sm:text-base">
                 <div><dt className="font-medium text-slate-500">Área</dt><dd>{area?.nombre}</dd></div>
                 {area?.form.fields.filter((f) => values[f.key]?.trim() && (f.key !== "contact" || wantContact)).map((f) => (
                   <div key={f.key}><dt className="font-medium text-slate-500">{f.label}</dt><dd className="whitespace-pre-wrap">{choicesFor(area, f.key).find((c) => c.value === values[f.key])?.label ?? values[f.key]}</dd></div>
@@ -178,11 +178,11 @@ export function ReportStepper({ data }: { data: PublicAreasResponse | null }) {
         {error && <p className="rounded-xl bg-red-50 p-3 text-sm text-red-700" role="alert">{error}</p>}
 
         <div className="flex flex-wrap items-center justify-between gap-3 border-t border-slate-100 pt-5">
-          <button type="button" onClick={back} disabled={step === 0} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-100 disabled:opacity-40">Atrás</button>
+          <button type="button" onClick={back} disabled={step === 0} className="rounded-xl px-4 py-2.5 text-sm font-semibold text-muni-navy hover:bg-slate-100 disabled:opacity-40">Atrás</button>
           {step < steps.length - 1 ? (
-            <button type="button" onClick={next} className="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-800">Continuar</button>
+            <button type="button" onClick={next} className="rounded-xl bg-muni-celeste px-5 py-2.5 text-sm font-semibold text-muni-navy hover:bg-muni-navy hover:text-white">Continuar</button>
           ) : (
-            <button type="submit" disabled={submitting} className="rounded-xl bg-brand-700 px-5 py-2.5 text-sm font-semibold text-white hover:bg-brand-800 disabled:opacity-60">{submitting ? "Enviando..." : "Enviar denuncia"}</button>
+            <button type="submit" disabled={submitting} className="rounded-xl bg-muni-celeste px-5 py-2.5 text-sm font-semibold text-muni-navy hover:bg-muni-navy hover:text-white disabled:opacity-60">{submitting ? "Enviando..." : "Enviar denuncia"}</button>
           )}
         </div>
       </form>

@@ -1,8 +1,8 @@
-# Cuidar (nombre provisorio)
+# Cuidar
 
-Plataforma web para **denuncias anónimas** de situaciones de negligencia, abuso o abandono de **adultos mayores**, destinada a una oficina municipal (contexto: Municipalidad de Aguilares, Tucumán, Argentina).
+Plataforma web de **denuncias anónimas** para la Oficina de **Desarrollo Social** de la Municipalidad de Aguilares (Tucumán, Argentina). Cubre 5 áreas: adultos mayores, violencia de género, niñez y adolescencia, diversidad sexual y de género, y abuso laboral.
 
-> Trabajo Final Integrador (TFI). Estado: **Fase 2 — Panel interno, auth y auditoría**.
+> Trabajo Final Integrador (TFI). Estado: **Fase 4 completa** — denuncia anónima multi-área, seguimiento por código, panel interno con roles, captcha, cifrado de datos sensibles y rediseño con la identidad visual municipal.
 
 ## Principios
 

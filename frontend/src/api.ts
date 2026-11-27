@@ -159,3 +159,27 @@ export function confirmEscalation(caseId: string): Promise<CaseDetail> {
 export function revealContact(reportId: string): Promise<{ contact: string }> {
   return request<{ contact: string }>(`/api/panel/reports/${reportId}/contact`);
 }
+
+export interface TrackingEvent {
+  event_type: string;
+  message: string;
+  created_at: string;
+}
+
+export interface TrackingStatusResponse {
+  case_number: string;
+  case_status: string;
+  created_at: string;
+  timeline: TrackingEvent[];
+}
+
+export function trackReport(trackingCode: string): Promise<TrackingStatusResponse> {
+  return request<TrackingStatusResponse>("/api/reports/track", {
+    method: "POST",
+    body: JSON.stringify({ tracking_code: trackingCode }),
+  });
+}
+
+export function logout(): Promise<void> {
+  return request<void>("/api/auth/logout", { method: "POST" });
+}
